@@ -13,3 +13,4 @@
 ## Data 
 
 - Hiện tại đang lấy dựa trên simulator của udacity, download [here](https://drive.google.com/file/d/1bczezH23t4FRLmLq8N9u90239d9dyEJZ/view?usp=sharing)
+- Chỉ cần tải về giải nén and run.
