@@ -9,6 +9,7 @@ from keras import optimizers
 import sklearn
 from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
+import time
 
 # Define the model architecture, in this case use the NVIDIA end-to-end driving model
 def model_architecture():    
@@ -197,13 +198,16 @@ model = model_architecture()
 # Loss and optimizer
 model.compile(loss='mse', optimizer=optimizers.Adam(lr=learning_rate))
 
-# Callbacks for checkpoints and early stop
+# Callbacks for checkpoints, tensorboard and early stop
 check_point = ModelCheckpoint('./checkpoints/model-e{epoch:03d}.h5', monitor='val_loss', verbose=0, save_best_only=False, save_weights_only=False, mode='auto')
 early_stop = EarlyStopping(monitor='val_loss', patience=5, verbose=0, mode='min')
+tensorboard = TensorBoard(log_dir="logs/{}".format(time.time()),
+                          batch_size=sample_size, write_images=True)
+
 
 # Train the model
 print(train_generator)
-history = model.fit_generator(train_generator, samples_per_epoch=len(train_samples) * 3, validation_data=validation_generator,nb_val_samples=len(valid_samples), nb_epoch=epochs, verbose=1, callbacks=[early_stop, check_point])
+history = model.fit_generator(train_generator, samples_per_epoch=len(train_samples) * 3, validation_data=validation_generator,nb_val_samples=len(valid_samples), nb_epoch=epochs, verbose=1, callbacks=[early_stop, check_point, tensorboard])
 
 # Save it to a file and show message again
 model.save('model.h5')
