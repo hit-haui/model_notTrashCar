@@ -3,7 +3,7 @@ import csv
 import cv2
 import numpy as np
 from keras.models import Sequential
-from keras.layers import Flatten, Dense, Dropout, Lambda, Cropping2D, Convolution2D,BatchNormalization,Input
+from keras.layers import Flatten, Dense, Dropout, Lambda, Cropping2D, Conv2D,BatchNormalization,Input
 from keras.callbacks import ModelCheckpoint, EarlyStopping, Callback, TensorBoard
 from keras import optimizers
 import sklearn
@@ -17,11 +17,11 @@ def model_architecture():
 
     model.add(BatchNormalization(epsilon=0.001, axis=1,input_shape=(66, 200, 3)))
 
-    model.add(Convolution2D(24,5,5,border_mode='valid', activation='relu', subsample=(2,2)))
-    model.add(Convolution2D(36,5,5,border_mode='valid', activation='relu', subsample=(2,2)))
-    model.add(Convolution2D(48,5,5,border_mode='valid', activation='relu', subsample=(2,2)))
-    model.add(Convolution2D(64,3,3,border_mode='valid', activation='relu', subsample=(1,1)))
-    model.add(Convolution2D(64,3,3,border_mode='valid', activation='relu', subsample=(1,1)))
+    model.add(Conv2D(24, (5, 5), padding="valid", strides=(2, 2), activation="relu"))
+    model.add(Conv2D(36, (5, 5), padding="valid", strides=(2, 2), activation="relu"))
+    model.add(Conv2D(48, (5, 5), padding="valid", strides=(2, 2), activation="relu"))
+    model.add(Conv2D(64, (3, 3), padding="valid", strides=(1, 1), activation="relu"))
+    model.add(Conv2D(64, (3, 3), padding="valid", strides=(1, 1), activation="relu"))
     model.add(Flatten())
     model.add(Dense(1164, activation='relu'))
     model.add(Dense(100, activation='relu'))

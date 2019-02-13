@@ -1,6 +1,11 @@
-import csv
+import pandas as pd
+from config import *
 import cv2
+import os
 import numpy as np
+from sklearn.model_selection import train_test_split
+import keras
+from keras.preprocessing.image import ImageDataGenerator
 from keras.models import Sequential
 from keras.layers import Flatten, Dense, Dropout, Lambda, Cropping2D, Convolution2D, ELU
 from keras.callbacks import ModelCheckpoint, EarlyStopping, Callback, TensorBoard
@@ -8,29 +13,44 @@ from keras import optimizers
 import sklearn
 from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
-
+import time
 from model import model_architecture
-from generator import generator
-# Load the all the samples from the csv file and store them into single sample lines	
-samples = []
-with open('./data/driving_log.csv') as csvfile:
-    reader = csv.reader(csvfile)
-    for line in reader:
-        if line[0] != 'center':
-            samples.append(line)
-print("Data sets loaded!")
-# Hyper-parameter
-epochs = 20
-sample_size = 64
-learning_rate = 1e-04
-# Get training (80%) and validation (20%) sample lines
-train_samples, valid_samples = train_test_split(samples, test_size=0.2)
 
-# Init generators
-train_generator = generator(train_samples, sample_size, 'train')
-validation_generator = generator(valid_samples, sample_size, 'valid')
+# from tqdm import tqdm
+
+# Read input
+input_data = pd.read_csv(train_csv)
 
 
+
+images = []
+labels = []
+
+
+
+# for index, each_row in tqdm(input_data.iterrows(), desc="Preprocess data"):
+for index, each_row in input_data.iterrows():
+    speed = each_row['speed']
+    angle = each_row['steering']
+    image_path = each_row['center']
+    img = cv2.imread(os.path.join('../end_to_end/data/',image_path))
+    img = cv2.resize(img, img_size[:-1])
+    images.append(img)
+    labels.append(np.array([speed, angle]))
+
+
+images = np.array(images)
+labels = np.array(labels)
+
+x_train, x_val, y_train, y_val = train_test_split(images, labels, test_size=0.1)
+
+gen = ImageDataGenerator(
+    zoom_range=0.2,
+    brightness_range=(10,15),
+)
+
+train_generator = gen.flow(x_train, y_train, batch_size= batch_size)
+val_generator = gen.flow(x_val, y_val, batch_size= batch_size)
 
 # Show message that we start
 print("Training network..")
@@ -48,9 +68,22 @@ early_stop = EarlyStopping(monitor='val_loss', patience=5, verbose=0, mode='min'
 
 # Train the model
 
-history = model.fit_generator(train_generator, samples_per_epoch=len(train_samples) * 3, validation_data=validation_generator,nb_val_samples=len(valid_samples), nb_epoch=epochs, verbose=1, callbacks=[early_stop, check_point])
+tensorboard = TensorBoard(log_dir="logs/{}".format(time.time()),
+                            batch_size=batch_size, write_images=True
+                        )
+            
+checkpoint = ModelCheckpoint(weight_path,monitor='val_loss',verbose=0,save_best_only=False,
+                                save_weights_only=False, mode='auto',period=1 )
 
-# Save it to a file and show message again
-model.save('model.h5')
-print()
-print("Network trained!")
+callbacks = [tensorboard,checkpoint]
+
+
+
+history = model.fit_generator(generator= train_generator, steps_per_epoch = train_generator.n//batch_size, epochs= epochs,
+                                validation_data = val_generator, validation_steps= val_generator.n//batch_size,
+                                callbacks=callbacks)
+
+
+
+
+
