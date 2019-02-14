@@ -31,7 +31,7 @@ labels = []
 # for index, each_row in tqdm(input_data.iterrows(), desc="Preprocess data"):
 for index, each_row in input_data.iterrows():
     speed = each_row['speed']
-    angle = each_row['steering']
+    angle = each_row['steering'] + 90 
     image_path = each_row['center']
     img = cv2.imread(os.path.join('../end_to_end/data/',image_path))
     img = cv2.resize(img, img_size[:-1])
