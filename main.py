@@ -1,16 +1,17 @@
-import pandas as pd
-from config import *
-import cv2
 import os
-import numpy as np
-from sklearn.model_selection import train_test_split
-from keras.preprocessing.image import ImageDataGenerator
-from keras.callbacks import ModelCheckpoint, EarlyStopping, Callback, TensorBoard
-from keras import optimizers
-from sklearn.model_selection import train_test_split
 import time
-from model import model_architecture
 
+import cv2
+import numpy as np
+import pandas as pd
+from keras import optimizers
+from keras.callbacks import (Callback, EarlyStopping, ModelCheckpoint,
+                             TensorBoard)
+from keras.preprocessing.image import ImageDataGenerator
+from sklearn.model_selection import train_test_split
+
+from config import *
+from model import model_architecture
 # from tqdm import tqdm
 
 # Read input
@@ -22,9 +23,9 @@ labels = []
 # for index, each_row in tqdm(input_data.iterrows(), desc="Preprocess data"):
 for index, each_row in input_data.iterrows():
     speed = each_row['speed']
-    angle = each_row['steering'] + 90 
+    angle = each_row['steering'] + 90
     image_path = each_row['center']
-    img = cv2.imread(os.path.join('../end_to_end/data/',image_path))
+    img = cv2.imread(os.path.join('../end_to_end/data/', image_path))
     img = cv2.resize(img, img_size[:-1])
     images.append(img)
     labels.append(np.array([speed, angle]))
@@ -33,15 +34,16 @@ for index, each_row in input_data.iterrows():
 images = np.array(images)
 labels = np.array(labels)
 
-x_train, x_val, y_train, y_val = train_test_split(images, labels, test_size=0.1)
+x_train, x_val, y_train, y_val = train_test_split(
+    images, labels, test_size=0.1)
 
 gen = ImageDataGenerator(
     zoom_range=0.2,
-    brightness_range=(10,15),
+    brightness_range=(10, 15),
 )
 
-train_generator = gen.flow(x_train, y_train, batch_size= batch_size)
-val_generator = gen.flow(x_val, y_val, batch_size= batch_size)
+train_generator = gen.flow(x_train, y_train, batch_size=batch_size)
+val_generator = gen.flow(x_val, y_val, batch_size=batch_size)
 
 # Show message that we start
 print("Training network..")
@@ -54,17 +56,18 @@ model = model_architecture()
 model.compile(loss='mse', optimizer=optimizers.Adam(lr=learning_rate))
 
 # Callbacks
-early_stop = EarlyStopping(monitor='val_loss', patience=5, verbose=0, mode='min')
+earlystop = EarlyStopping(
+    monitor='val_loss', patience=5, verbose=0, mode='min')
 
 tensorboard = TensorBoard(log_dir="logs/{}".format(time.time()),
-                            batch_size=batch_size, write_images=True)
+                          batch_size=batch_size, write_images=True)
 
-checkpoint = ModelCheckpoint(weight_path, monitor='val_loss',verbose=0,save_best_only=False,
-                                save_weights_only=False, mode='auto',period=1 )
+checkpoint = ModelCheckpoint(weight_path, monitor='val_loss', verbose=0, save_best_only=False,
+                             save_weights_only=False, mode='auto', period=1)
 
 callbacks = [tensorboard, checkpoint]
 
 # Train the model
-history = model.fit_generator(generator= train_generator, steps_per_epoch = train_generator.n//batch_size, epochs= epochs,
-                                validation_data = val_generator, validation_steps= val_generator.n//batch_size,
-                                callbacks=callbacks)
+history = model.fit_generator(generator=train_generator, steps_per_epoch=train_generator.n//batch_size, epochs=epochs,
+                              validation_data=val_generator, validation_steps=val_generator.n//batch_size,
+                              callbacks=callbacks)
