@@ -16,9 +16,7 @@ seq_length = 0
 train_split = 0.8
 val_split = 0.2
 
-#input_shape = (66, 200, 3)
-# Data generator
-#train_generator, val_generator = get_data_loader(batch_size=batch_size, img_size=img_size)
+
 train_generator = train_generator(
     (66, 200 , 3), batch_size, seq_length, train_split)
 
@@ -30,8 +28,6 @@ val_generator = val_generator(
 input_shape = Input(shape = img_size, name='input_shape')
 
 X = input_shape
-
-# model = Sequential()
 X = BatchNormalization(epsilon=0.001, axis=1)(X)
 X = Conv2D(24, (5, 5), padding="valid", strides=(2, 2), activation="relu")(X) 
 X = Conv2D(36, (5, 5), padding="valid", strides=(2, 2), activation="relu")(X)
