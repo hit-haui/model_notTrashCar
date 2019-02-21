@@ -20,10 +20,10 @@ val_split = 0.2
 
 # Data generator
 train_generator = train_generator(
-    img_size, batch_size, seq_length, train_split)
+    (160,120,30), batch_size, seq_length, train_split)
 
 val_generator = val_generator(
-    img_size, batch_size, seq_length, val_split)
+    (160,120,30), batch_size, seq_length, val_split)
 
 input_shape = Input(shape=img_size, name='input_shape')
 
