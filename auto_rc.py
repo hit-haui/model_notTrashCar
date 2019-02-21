@@ -60,15 +60,6 @@ X = Dropout(rate=0.1)(X)
 X = Dense(units=10, activation='relu')(X)
 X = Dropout(rate=0.1)(X)
 
-# # Steering angle output - linear
-# steering_out = Dense(units = 1, activation = 'linear')(X)
-# #Scale the atan of steering output
-# steering_out = Lambda(lambda x: tf.multiply(tf.atan(x), 2), name = 'steering_out')(steering_out)
-
-# # Throttle output - linear
-# throttle_out = Dense(units = 1, activation = 'linear')(X)
-# # Scale the atan of throttle output
-# throttle_out = Lambda(lambda x: tf.multiply(tf.atan(x), 2), name = 'throttle_out')(throttle_out)
 
 steering = Dense(1, activation='relu', name='steering')(X)
 speed = Dense(1, activation='relu', name='speed')(X)
