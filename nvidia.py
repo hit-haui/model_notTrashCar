@@ -43,7 +43,6 @@ X = Dense(50, activation='relu')(X)
 
 steering = Dense(1, activation='relu', name='steering')(X)
 speed = Dense(1, activation='relu', name='speed')(X) 
-model = X 
 
 model = Model(inputs=[input_shape], outputs=[steering, speed])
 
