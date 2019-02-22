@@ -112,7 +112,7 @@ def val_generator(img_size, batch_size, split_percentage=0.2):
             yield (x_val), [(y1_val), (y2_val)]
 
 
-def get_callback(weight_path, batch_size):
+def get_callback(weight_path, batch_size, early_stop):
     # Callbacks
     earlystop = EarlyStopping(
         monitor='val_loss', patience=5, verbose=0, mode='min')
@@ -124,7 +124,10 @@ def get_callback(weight_path, batch_size):
                                  save_weights_only=False, mode='auto', period=1)
     reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.2,
                                   patience=5, min_lr=1e-5)
+    if (early_stop == True):
+        callbacks = [earlystop, tensorboard, checkpoint, reduce_lr]
+    else: 
+        callbacks = [tensorboard, checkpoint, reduce_lr]
 
-    callbacks = [tensorboard, checkpoint, reduce_lr]
 
     return callbacks

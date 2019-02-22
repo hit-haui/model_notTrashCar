@@ -14,7 +14,8 @@ batch_size = 2
 
 train_split = 0.8
 val_split = 0.2
-
+ 
+early_stop = False
 
 train_generator = train_generator(
     (66, 200 , 3), batch_size, train_split)
@@ -56,4 +57,4 @@ model.compile(optimizer = Adam(lr = learning_rate),
 weight_path = "model/first-{epoch:03d}-{val_loss:.5f}.hdf5"
 model.fit_generator(generator=train_generator, steps_per_epoch=batch_size, epochs=epochs,
                               validation_data=val_generator, validation_steps=batch_size,
-                              callbacks=get_callback(weight_path=weight_path, batch_size=batch_size))
+                              callbacks=get_callback(weight_path=weight_path, batch_size=batch_size, early_stop = early_stop))
