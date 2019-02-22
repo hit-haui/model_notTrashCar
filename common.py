@@ -11,7 +11,7 @@ from tqdm import tqdm
 from sklearn.model_selection import train_test_split
 
 
-def load_data(img_size):
+def load_data(img_size, test_overfit_single_batch):
     input_data = pd.read_csv(train_csv)
 
     images = []
@@ -28,7 +28,8 @@ def load_data(img_size):
         images.append(img)
         speed_labels.append(speed)
         angle_labels.append(angle)
-        count += 1
+        if test_overfit_single_batch == True:
+            count += 1
         if count == 21:
             break
 
@@ -38,11 +39,11 @@ def load_data(img_size):
     return images, angle_labels, speed_labels
 
 
-def split_train_data(img_size, split_percentage=0.8):
+def split_train_data(img_size,test_overfit_single_batch, split_percentage=0.8):
     """
 
     """
-    images_list, labels1_list, labels2_list = load_data(img_size)
+    images_list, labels1_list, labels2_list = load_data(img_size, test_overfit_single_batch)
 
     # Split data to training set and validation set with 80:20 percentage
     train_x = np.array(images_list[:int(len(images_list) * split_percentage)])
@@ -54,11 +55,11 @@ def split_train_data(img_size, split_percentage=0.8):
     return train_x, train_y1, train_y2
 
 
-def split_val_data(img_size, split_percentage=0.2):
+def split_val_data(img_size,test_overfit_single_batch, split_percentage=0.2):
     """
 
     """
-    images_list, labels1_list, labels2_list = load_data(img_size)
+    images_list, labels1_list, labels2_list = load_data(img_size, test_overfit_single_batch)
 
     # Split data to training set and validation set with 80:20 percentage
     val_x = np.array(images_list[-int(len(images_list) * split_percentage):])
@@ -68,13 +69,13 @@ def split_val_data(img_size, split_percentage=0.2):
     return val_x, val_y1, val_y2
 
 
-def train_generator(img_size, batch_size, split_percentage=0.8):
+def train_generator(img_size, batch_size,test_overfit_single_batch, split_percentage=0.8):
     """
 
     """
 
     train_x, train_y1, train_y2 = split_train_data(
-        img_size, split_percentage)
+        img_size,test_overfit_single_batch, split_percentage)
 
     order = np.arange(len(train_x))
 
@@ -94,13 +95,13 @@ def train_generator(img_size, batch_size, split_percentage=0.8):
             yield (x_train), [(y1_train), (y2_train)]
 
 
-def val_generator(img_size, batch_size, split_percentage=0.2):
+def val_generator(img_size, batch_size,test_overfit_single_batch, split_percentage=0.2):
     """
 
     """
 
     val_x, val_y1, val_y2 = split_val_data(
-        img_size, split_percentage)
+        img_size,test_overfit_single_batch, split_percentage)
 
     while True:
         # We don't shuffle validation data

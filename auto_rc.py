@@ -17,12 +17,14 @@ learning_rate = 0.01
 train_split = 0.8
 val_split = 0.2
 early_stop = False
+test_overfit_single_batch = True
+
 # Data generator
 train_generator = train_generator(
-    (160,120,30), batch_size, train_split)
+    (160,120,30), batch_size,test_overfit_single_batch, train_split)
 
 val_generator = val_generator(
-    (160,120,30), batch_size, val_split)
+    (160,120,30), batch_size,test_overfit_single_batch, val_split)
 
 input_shape = Input(shape=img_size, name='input_shape')
 
