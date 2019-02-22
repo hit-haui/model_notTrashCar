@@ -12,16 +12,15 @@ epochs = 100
 learning_rate = 0.01
 batch_size = 2
 
-seq_length = 0
 train_split = 0.8
 val_split = 0.2
 
 
 train_generator = train_generator(
-    (66, 200 , 3), batch_size, seq_length, train_split)
+    (66, 200 , 3), batch_size, train_split)
 
 val_generator = val_generator(
-    (66, 200, 3), batch_size, seq_length, val_split)
+    (66, 200, 3), batch_size, val_split)
 # Init the model
 
 

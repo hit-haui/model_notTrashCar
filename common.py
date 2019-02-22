@@ -23,8 +23,7 @@ def load_data(img_size):
         speed = each_row['speed']
         angle = each_row['steering'] + 90
         image_path = each_row['center']
-        img = cv2.imread(os.path.join(
-            '/home/vicker/Desktop/end_to_end/data/', image_path))
+        img = cv2.imread(os.path.join('/home/vicker/Documents/end_to_end/data/', image_path))
         img = cv2.resize(img, img_size[:-1])
         images.append(img)
         speed_labels.append(speed)
@@ -39,7 +38,7 @@ def load_data(img_size):
     return images, angle_labels, speed_labels
 
 
-def split_train_data(img_size, seq_length, split_percentage=0.8):
+def split_train_data(img_size, split_percentage=0.8):
     """
 
     """
@@ -55,7 +54,7 @@ def split_train_data(img_size, seq_length, split_percentage=0.8):
     return train_x, train_y1, train_y2
 
 
-def split_val_data(img_size, seq_length, split_percentage=0.2):
+def split_val_data(img_size, split_percentage=0.2):
     """
 
     """
@@ -69,13 +68,13 @@ def split_val_data(img_size, seq_length, split_percentage=0.2):
     return val_x, val_y1, val_y2
 
 
-def train_generator(img_size, batch_size, seq_length, split_percentage=0.8):
+def train_generator(img_size, batch_size, split_percentage=0.8):
     """
 
     """
 
     train_x, train_y1, train_y2 = split_train_data(
-        img_size, seq_length, split_percentage)
+        img_size, split_percentage)
 
     order = np.arange(len(train_x))
 
@@ -95,13 +94,13 @@ def train_generator(img_size, batch_size, seq_length, split_percentage=0.8):
             yield (x_train), [(y1_train), (y2_train)]
 
 
-def val_generator(img_size, batch_size, seq_length, split_percentage=0.2):
+def val_generator(img_size, batch_size, split_percentage=0.2):
     """
 
     """
 
     val_x, val_y1, val_y2 = split_val_data(
-        img_size, seq_length, split_percentage)
+        img_size, split_percentage)
 
     while True:
         # We don't shuffle validation data
