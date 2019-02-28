@@ -7,7 +7,7 @@ from config import *
 from common import *
 
 
-img_size = (200, 66, 3)
+img_size = (200, 66, 4)
 epochs = 100
 learning_rate = 0.01
 batch_size = 2
@@ -16,7 +16,7 @@ train_split = 0.8
 val_split = 0.2
  
 early_stop = False
-test_overfit_single_batch = False
+test_overfit_single_batch = True
 
 
 train_generator = train_generator(
