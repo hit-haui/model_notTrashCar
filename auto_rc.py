@@ -8,7 +8,7 @@ from keras import regularizers
 from config import *
 from common import *
 
-img_size = (120, 160, 3)
+img_size = (120, 160, 4)
 
 batch_size = 2
 epochs = 100
@@ -21,10 +21,10 @@ test_overfit_single_batch = True
 
 # Data generator
 train_generator = train_generator(
-    (160,120,30), batch_size,test_overfit_single_batch, train_split)
+    (160,120,3), batch_size,test_overfit_single_batch, train_split)
 
 val_generator = val_generator(
-    (160,120,30), batch_size,test_overfit_single_batch, val_split)
+    (160,120,3), batch_size,test_overfit_single_batch, val_split)
 
 input_shape = Input(shape=img_size, name='input_shape')
 
