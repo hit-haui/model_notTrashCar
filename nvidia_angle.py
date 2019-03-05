@@ -8,9 +8,9 @@ from common_angle import *
 
 
 img_size = (200, 66, 3)
-epochs = 100
+epochs = 200
 learning_rate = 0.01
-batch_size = 2
+batch_size = 64
 
 train_split = 0.8
 val_split = 0.2
@@ -20,38 +20,39 @@ test_overfit_single_batch = True
 
 
 train_generator = train_generator(
-    (66, 200 , 3), batch_size, test_overfit_single_batch, train_split)
+    (200, 66 , 3), batch_size, test_overfit_single_batch, train_split)
 
 val_generator = val_generator(
-    (66, 200, 3), batch_size,test_overfit_single_batch, val_split)
+    (200, 66, 3), batch_size,test_overfit_single_batch, val_split)
 # Init the model
 
 
-input_shape = Input(shape = img_size, name='input_shape')
+model = Sequential()
 
-X = input_shape
-X = BatchNormalization(epsilon=0.001, axis=1)(X)
-X = Conv2D(24, (5, 5), padding="valid", strides=(2, 2), activation="relu")(X) 
-X = Conv2D(36, (5, 5), padding="valid", strides=(2, 2), activation="relu")(X)
-X = Conv2D(48, (5, 5), padding="valid", strides=(2, 2), activation="relu")(X)
-X = Conv2D(64, (3, 3), padding="valid", strides=(1, 1), activation="relu")(X)
-X = Conv2D(64, (3, 3), padding="valid", strides=(1, 1), activation="relu")(X)
-X = Flatten()(X)
-X = Dense(1164, activation='relu')(X)
-X = Dense(100, activation='relu')(X)
-X = Dense(50, activation='relu')(X)
-
-steering = Dense(1, activation='relu', name='steering')(X)
+model.add(BatchNormalization(epsilon=0.001, axis=1,input_shape=(66, 200, 3)))
 
 
-model = Model(inputs=[input_shape], outputs=[steering])
+model.add(Conv2D(24, (5, 5), padding="valid", strides=(2, 2), activation="relu"))
+model.add(Conv2D(36, (5, 5), padding="valid", strides=(2, 2), activation="relu"))
+model.add(Conv2D(48, (5, 5), padding="valid", strides=(2, 2), activation="relu"))
+model.add(Conv2D(64, (3, 3), padding="valid", strides=(1, 1), activation="relu"))
+model.add(Conv2D(64, (3, 3), padding="valid", strides=(1, 1), activation="relu"))
+model.add(Flatten())
+model.add(Dense(1164, activation='relu'))
+model.add(Dense(100, activation='relu'))
+model.add(Dense(50, activation='relu'))
+
+model.add(Dense(1, activation='relu',name='steering'))
+
+
+
 
 print(model.summary())
 
 
 # Loss and optimizer
 model.compile(optimizer = Adam(lr = learning_rate),
-                loss = {'steering':'mse'})
+                loss = 'mse')
 
 
 # Train the model
