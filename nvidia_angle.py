@@ -7,7 +7,7 @@ from config import *
 from common_angle import *
 
 
-img_size = (200, 66, 4)
+img_size = (200, 66, 3)
 epochs = 100
 learning_rate = 0.01
 batch_size = 2

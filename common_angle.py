@@ -25,8 +25,9 @@ def load_data(img_size, test_overfit_single_batch):
         image_path = each_row['center']
         img = cv2.imread(os.path.join('/home/vicker/Documents/end_to_end/data/', image_path))
         img = cv2.resize(img, img_size[:-1])
-        img_depth = cv2.cvtColor(img,cv2.COLOR_RGB2GRAY)
-        images.append(np.dstack((img,img_depth)))
+#        img_depth = cv2.cvtColor(img,cv2.COLOR_RGB2GRAY)
+ #       images.append(np.dstack((img,img_depth)))
+        images.append(img)
         #speed_labels.append(speed)
         angle_labels.append(angle)
         if test_overfit_single_batch == True:
