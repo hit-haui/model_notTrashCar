@@ -21,7 +21,7 @@ def load_data(img_size, test_overfit_single_batch):
     for _, each_row in tqdm(input_data.iterrows(), desc="Preprocess data", total=input_data.shape[0]):
         # for index, each_row in tqdm(input_data.iterrows():
         speed = each_row['speed']
-        angle = each_row['steering'] + 90
+        angle = each_row['steering'] + 60
         image_path = each_row['center']
         img = cv2.imread(os.path.join('/home/vicker/Documents/end_to_end/data/', image_path))
         img = cv2.resize(img, img_size[:-1])
