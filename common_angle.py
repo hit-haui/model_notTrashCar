@@ -9,32 +9,23 @@ from keras.callbacks import (Callback, EarlyStopping, ModelCheckpoint,
 from keras.preprocessing.image import ImageDataGenerator
 from tqdm import tqdm
 from sklearn.model_selection import train_test_split
-
+import json
 
 def load_data(img_size, test_overfit_single_batch):
-    input_data = pd.read_csv(train_csv)
+    input_data = json.loads(open(train_json,'r').read())
 
     images = []
     #speed_labels = []
     angle_labels = []
-    count = 0
-    for _, each_row in tqdm(input_data.iterrows(), desc="Preprocess data", total=input_data.shape[0]):
-        # for index, each_row in tqdm(input_data.iterrows():
-        speed = each_row['speed']
-        angle = each_row['steering'] + 60
-        image_path = each_row['center']
-        img = cv2.imread(os.path.join('/home/vicker/Documents/end_to_end/data/', image_path))
-        img = cv2.resize(img, img_size[:-1])
-#        img_depth = cv2.cvtColor(img,cv2.COLOR_RGB2GRAY)
- #       images.append(np.dstack((img,img_depth)))
-        images.append(img)
-        #speed_labels.append(speed)
-        angle_labels.append(angle)
-        if test_overfit_single_batch == True:
-            count += 1
-        if count == 121:
-            break
+    # count = 0
 
+    for each_sample in tqdm(input_data, desc="Preprocess data"):
+        img = cv2.imread(each_sample['rgb_img_path'])
+        img = cv2.resize(img, img_size[:-1])
+        images.append(img)
+        angle = each_sample['angle'] + 60
+        angle_labels.append(angle)
+        
     images = np.array(images)
     #speed_labels = np.array(speed_labels)
     angle_labels = np.array(angle_labels)
