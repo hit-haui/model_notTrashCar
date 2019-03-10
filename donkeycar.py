@@ -16,12 +16,12 @@ batch_size = 2
 early_stop = False
 test_overfit_single_batch = True
 
-# # Data generator
-# train_generator = train_generator(
-#     (160,120,3), batch_size,test_overfit_single_batch, train_split)
+# Data generator
+train_generator = train_generator(
+    (160,120,3), batch_size,test_overfit_single_batch, train_split)
 
-# val_generator = val_generator(
-#     (160,120,3), batch_size,test_overfit_single_batch, val_split)
+val_generator = val_generator(
+    (160,120,3), batch_size,test_overfit_single_batch, val_split)
 # Model
 img_in = Input(shape=(240, 320, 1), name='img_in')
 x = img_in
@@ -39,24 +39,24 @@ x = Dropout(.1)(x)
 # categorical output of the angle
 angle_out = Dense(1, activation='relu', name='angle_out')(x)
 
-# # continous output of throttle
-# throttle_out = Dense(1, activation='relu', name='throttle_out')(x)
+# continous output of throttle
+throttle_out = Dense(1, activation='relu', name='throttle_out')(x)
 
-# model = Model(inputs=[img_in], outputs=[angle_out, throttle_out])
-model = Model(inputs=img_in, outputs=angle_out)
+model = Model(inputs=[img_in], outputs=[angle_out, throttle_out])
+#model = Model(inputs=img_in, outputs=angle_out)
 
 # model summary
 print(model.summary())
 
 
-# model.compile(optimizer='adam',
-#                 loss={'angle_out': 'mean_squared_error',
-#                     'throttle_out': 'mean_squared_error'},
-#                 loss_weights={'angle_out': 0.5, 'throttle_out': .5})
+model.compile(optimizer='adam',
+                loss={'angle_out': 'mean_squared_error',
+                    'throttle_out': 'mean_squared_error'},
+                loss_weights={'angle_out': 0.5, 'throttle_out': .5})
 
 
-# # Train the model
-# weight_path = "model/first-{epoch:03d}-{val_loss:.5f}.hdf5"
-# model.fit_generator(generator=train_generator, steps_per_epoch=batch_size, epochs=epochs,
-#                     validation_data=val_generator, validation_steps=batch_size,
-#                     callbacks=get_callback(weight_path=weight_path, batch_size=batch_size,early_stop = early_stop))
+# Train the model
+weight_path = "model/first-{epoch:03d}-{val_loss:.5f}.hdf5"
+model.fit_generator(generator=train_generator, steps_per_epoch=batch_size, epochs=epochs,
+                    validation_data=val_generator, validation_steps=batch_size,
+                    callbacks=get_callback(weight_path=weight_path, batch_size=batch_size,early_stop = early_stop))
