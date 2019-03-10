@@ -1,127 +1,62 @@
-import pandas as pd
-import time
 import cv2
-import os
+import os 
 import numpy as np
-from config import *
-from keras.callbacks import (Callback, EarlyStopping, ModelCheckpoint,
-                             TensorBoard, ReduceLROnPlateau)
-from keras.preprocessing.image import ImageDataGenerator
 from tqdm import tqdm
-from sklearn.model_selection import train_test_split
 import json
+from sklearn.model_selection import train_test_split
+from keras_preprocessing.image import ImageDataGenerator
+from keras.callbacks import TensorBoard, ModelCheckpoint
+import time
 
-def load_data(img_size, test_overfit_single_batch):
-    input_data = json.loads(open(train_json,'r').read())
 
-    images = []
-    #speed_labels = []
-    angle_labels = []
-    # count = 0
 
-    for each_sample in tqdm(input_data, desc="Preprocess data"):
-        img = cv2.imread(each_sample['rgb_img_path'])
-        img = cv2.resize(img, img_size[:-1])
-        images.append(img)
+batch_size = 64
+img_shape = (240, 320, 1)
+epochs = 1000
+path = '/home/vicker/Downloads/recored_data/'
+
+def create_generator(img, label, batch_size):
+    generator = ImageDataGenerator()
+    return generator.flow(x=img, y=label, batch_size=batch_size)
+
+def load_data():
+    
+    dataset = json.loads(open(path+'/key_data.json', 'r').read())
+    imgs = []
+    angles = []
+    for each_sample in tqdm(dataset):
+        new_path = os.path.join(path, 'rgb', '{}_rgb.jpg'.format(each_sample['index']))
+        # print(new_path)
+        img = cv2.imread(new_path, 0)
         angle = each_sample['angle'] + 60
-        angle_labels.append(angle)
-        
-    images = np.array(images)
-    #speed_labels = np.array(speed_labels)
-    angle_labels = np.array(angle_labels)
-    return images, angle_labels
+        img = np.expand_dims(img, axis=2)
+        imgs.append(img)
+        angles.append(angle)
 
+    imgs = np.array(imgs)
+    angles = np.array(angles)
 
-def split_train_data(img_size,test_overfit_single_batch, split_percentage=0.8):
-    """
+    x_train, x_test, y_train, y_test = train_test_split(imgs, angles, test_size=0.2)
+    print(x_train.shape, y_train.shape)
+    print(x_test.shape, y_train.shape)
+    # import pdb; pdb.set_trace()
 
-    """
-    images_list, labels1_list = load_data(img_size, test_overfit_single_batch)
+    train_gen = create_generator(x_train, y_train, batch_size)
+    test_gen = create_generator(x_test, y_test, batch_size)
+    return train_gen,test_gen
 
-    # Split data to training set and validation set with 80:20 percentage
-    train_x = np.array(images_list[:int(len(images_list) * split_percentage)])
-    train_y1 = np.array(
-        labels1_list[:int(len(images_list) * split_percentage)])
-    #train_y2 = np.array(
-       # labels2_list[:int(len(images_list) * split_percentage)])
-
-    return train_x, train_y1
-
-
-def split_val_data(img_size,test_overfit_single_batch, split_percentage=0.2):
-    """
-
-    """
-    images_list, labels1_list = load_data(img_size, test_overfit_single_batch)
-
-    # Split data to training set and validation set with 80:20 percentage
-    val_x = np.array(images_list[-int(len(images_list) * split_percentage):])
-    val_y1 = np.array(labels1_list[-int(len(images_list) * split_percentage):])
-    #val_y2 = np.array(labels2_list[-int(len(images_list) * split_percentage):])
-
-    return val_x, val_y1
-
-
-def train_generator(img_size, batch_size,test_overfit_single_batch, split_percentage=0.8):
-    """
-
-    """
-
-    train_x, train_y1 = split_train_data(
-        img_size,test_overfit_single_batch, split_percentage)
-
-    order = np.arange(len(train_x))
-
-    while True:
-
-        # Shuffle training data
-        np.random.shuffle(order)
-        x = train_x[order]
-        y1 = train_y1[order]
-        #y2 = train_y2[order]
-
-        for index in range(batch_size):
-            x_train = x[index * batch_size:(index + 1) * batch_size]
-            y1_train = y1[index * batch_size:(index + 1) * batch_size]
-            #y2_train = y2[index * batch_size:(index + 1) * batch_size]
-
-            yield (x_train), [(y1_train)]
-
-
-def val_generator(img_size, batch_size,test_overfit_single_batch, split_percentage=0.2):
-    """
-
-    """
-
-    val_x, val_y1 = split_val_data(
-        img_size,test_overfit_single_batch, split_percentage)
-
-    while True:
-        # We don't shuffle validation data
-        for index in range(batch_size):
-            x_val = val_x[index * batch_size:(index + 1) * batch_size]
-            y1_val = val_y1[index * batch_size:(index + 1) * batch_size]
-            #y2_val = val_y2[index * batch_size:(index + 1) * batch_size]
-
-            yield (x_val), [(y1_val)]
-
-
-def get_callback(weight_path, batch_size, early_stop):
+def get_callback(weight_path, batch_size):
     # Callbacks
-    earlystop = EarlyStopping(
-        monitor='val_loss', patience=5, verbose=0, mode='min')
+    # earlystop = EarlyStopping(
+    #     monitor='val_loss', patience=5, verbose=0, mode='min')
 
     tensorboard = TensorBoard(log_dir="logs/{}".format(time.time()),
                               batch_size=batch_size, write_images=True)
 
     checkpoint = ModelCheckpoint(weight_path, monitor='val_loss', verbose=0, save_best_only=False,
                                  save_weights_only=False, mode='auto', period=1)
-    reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.2,
-                                  patience=5, min_lr=1e-5)
-    if (early_stop == True):
-        callbacks = [earlystop, tensorboard, checkpoint, reduce_lr]
-    else: 
-        callbacks = [tensorboard, checkpoint, reduce_lr]
-
-
+    # reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.2,
+    #                               patience=5, min_lr=1e-5)
+   
+    callbacks = [tensorboard, checkpoint]
     return callbacks
