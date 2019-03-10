@@ -114,3 +114,4 @@ __pycache__
 *.pyc
 /tags
 /logs
+/data

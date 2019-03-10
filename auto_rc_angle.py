@@ -8,9 +8,9 @@ from keras import regularizers
 from config import *
 from common_angle import *
 
-img_size = (120, 160, 3)
+img_size = (240, 320, 1)
 
-batch_size = 2
+batch_size = 64
 epochs = 100
 learning_rate = 0.01
 
@@ -38,7 +38,7 @@ X = Conv2D(filters=36, kernel_size=(5, 5),
 X = Conv2D(filters=48, kernel_size=(5, 5),
            strides=(2, 2), activation='relu')(X)
 X = Conv2D(filters=64, kernel_size=(3, 3),
-           strides=(1, 1), activation='relu')(X)
+           strides=(2, 2), activation='relu')(X)
 X = Conv2D(filters=64, kernel_size=(3, 3),
            strides=(1, 1), activation='relu')(X)
 
@@ -46,20 +46,20 @@ X = Conv2D(filters=64, kernel_size=(3, 3),
 X = Flatten()(X)
 
 # PilotNet first fully-connected layer + dropout
-X = Dense(units=1152, activation='relu')(X)
+X = Dense(units=200, activation='relu')(X)
 X = Dropout(rate=0.1)(X)
 
 # PilotNet second fully-connected layer + dropout
-X = Dense(units=100, activation='relu')(X)
-X = Dropout(rate=0.1)(X)
-
-# PilotNet third fully-connected layer + dropout
 X = Dense(units=50, activation='relu')(X)
 X = Dropout(rate=0.1)(X)
 
-# PilotNet fourth fully-connected layer + dropout
+# PilotNet third fully-connected layer + dropout
 X = Dense(units=10, activation='relu')(X)
 X = Dropout(rate=0.1)(X)
+
+# # PilotNet fourth fully-connected layer + dropout
+# X = Dense(units=10, activation='relu')(X)
+# X = Dropout(rate=0.1)(X)
 
 
 steering = Dense(1, activation='relu', name='steering')(X)
@@ -71,13 +71,3 @@ steering = Dense(1, activation='relu', name='steering')(X)
 model = Model(inputs=[input_shape], outputs=[steering])
 
 print(model.summary())
-
-# Compile model for linear
-model.compile(optimizer=Adam(lr=learning_rate),
-              loss={'steering': 'mse'})
-
-# Train the model
-weight_path = "model/first-{epoch:03d}-{val_loss:.5f}.hdf5"
-model.fit_generator(generator=train_generator, steps_per_epoch=batch_size, epochs=epochs,
-                    validation_data=val_generator, validation_steps=batch_size,
-                    callbacks=get_callback(weight_path=weight_path, batch_size=batch_size,early_stop = early_stop))
