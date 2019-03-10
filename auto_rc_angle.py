@@ -8,25 +8,12 @@ from keras import regularizers
 from config import *
 from common_angle import *
 
-img_size = (240, 320, 1)
-
-batch_size = 64
-epochs = 100
-learning_rate = 0.01
-
-train_split = 0.8
-val_split = 0.2
-early_stop = False
-test_overfit_single_batch = True
 
 # Data generator
-train_generator = train_generator(
-    (160,120,3), batch_size,test_overfit_single_batch, train_split)
+train_generator, val_generator = load_data()
 
-val_generator = val_generator(
-    (160,120,3), batch_size,test_overfit_single_batch, val_split)
-
-input_shape = Input(shape=img_size, name='input_shape')
+# Model
+input_shape = Input(shape=img_shape, name='input_shape')
 
 X = input_shape
 
@@ -71,3 +58,14 @@ steering = Dense(1, activation='relu', name='steering')(X)
 model = Model(inputs=[input_shape], outputs=[steering])
 
 print(model.summary())
+
+# Loss and optimizer
+model.compile(optimizer = Adam(),
+                loss = 'mse')
+
+
+# Train the model
+weight_path = "model/first-{epoch:03d}-{val_loss:.5f}.hdf5"
+model.fit_generator(generator=train_generator, steps_per_epoch=batch_size, epochs=epochs,
+                              validation_data=val_generator, validation_steps=batch_size,
+                              callbacks=get_callback(weight_path=weight_path, batch_size=batch_size,))
