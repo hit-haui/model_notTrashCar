@@ -36,7 +36,7 @@ def load_data():
     imgs = np.array(imgs)
     angles = np.array(angles)
 
-    x_train, x_test, y_train, y_test = train_test_split(imgs, angles, test_size=0.2)
+    x_train, x_test, y_train, y_test = train_test_split(imgs, angles, test_size=0.2,random_states= 2019)
     print(x_train.shape, y_train.shape)
     print(x_test.shape, y_train.shape)
     # import pdb; pdb.set_trace()
