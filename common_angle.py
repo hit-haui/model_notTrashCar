@@ -11,9 +11,9 @@ import time
 
 
 batch_size = 64
-img_shape = (240, 320, 1)
+img_shape = (240, 320, 2)
 epochs = 1000
-path = '/home/vicker/Downloads/recored_data/'
+path = '/home/hai/Downloads/recored_data'
 
 def create_generator(img, label, batch_size):
     generator = ImageDataGenerator()
@@ -21,22 +21,24 @@ def create_generator(img, label, batch_size):
 
 def load_data():
     
-    dataset = json.loads(open(path+'/key_data.json', 'r').read())
+    dataset = json.loads(open(path+'/over_sampled_label.json', 'r').read())
     imgs = []
     angles = []
     for each_sample in tqdm(dataset):
-        new_path = os.path.join(path, 'rgb', '{}_rgb.jpg'.format(each_sample['index']))
+        rgb_path = each_sample['rgb_img_path']
+        depth_path = each_sample['depth_img_path']
         # print(new_path)
-        img = cv2.imread(new_path, 0)
+        img_rgb = cv2.imread(rgb_path, 0)
+        img_depth = cv2.imread(depth_path,0)
         angle = each_sample['angle'] + 60
-        img = np.expand_dims(img, axis=2)
-        imgs.append(img)
+        img = np.expand_dims(img_rgb, axis=2)
+        imgs.append(np.dstack((img_rgb,img_depth)))
         angles.append(angle)
 
     imgs = np.array(imgs)
     angles = np.array(angles)
 
-    x_train, x_test, y_train, y_test = train_test_split(imgs, angles, test_size=0.2,random_states= 2019)
+    x_train, x_test, y_train, y_test = train_test_split(imgs, angles, test_size=0.2)
     print(x_train.shape, y_train.shape)
     print(x_test.shape, y_train.shape)
     # import pdb; pdb.set_trace()
