@@ -13,18 +13,22 @@ import time
 from tqdm import tqdm
 
 # Data
-path = './data/'
-dataset = json.loads(open(path+'/key_data.json', 'r').read())
+path = '/home/linus/data-generator-notTrashCar/dataset_1551788916.5544326/'
+dataset = json.loads(open(path+'over_sampled_label.json', 'r').read())
 batch_size = 64
 img_shape = (240, 320, 1)
-epochs = 1000
+epochs = 2000
 
 imgs = []
 angles = []
 for each_sample in tqdm(dataset):
-    new_path = os.path.join(path, 'rgb', '{}_rgb.jpg'.format(each_sample['index']))
+    # new_path = os.path.join(path, 'rgb', '{}_rgb.jpg'.format(each_sample['index']))
+    new_path = os.path.join('/home/linus/data-generator-notTrashCar/',each_sample['rgb_img_path'][2:])
     # print(new_path)
     img = cv2.imread(new_path, 0)
+    img = cv2.resize(img, (img_shape[1], img_shape[0]))
+    # cv2.imshow('lol', img)
+    # cv2.waitKey(0)
     angle = each_sample['angle'] + 60
     img = np.expand_dims(img, axis=2)
     imgs.append(img)
@@ -33,18 +37,18 @@ for each_sample in tqdm(dataset):
 imgs = np.array(imgs)
 angles = np.array(angles)
 
-x_train, x_test, y_train, y_test = train_test_split(imgs, angles, test_size=0.2)
+x_train, x_test, y_train, y_test = train_test_split(imgs, angles, test_size=0.2, random_state=2019, shuffle=True)
 print(x_train.shape, y_train.shape)
-print(x_test.shape, y_train.shape)
+print(x_test.shape, y_test.shape)
 # import pdb; pdb.set_trace()
 
 
-def create_generator(img, label, batch_size):
-    generator = ImageDataGenerator()
-    return generator.flow(x=img, y=label, batch_size=batch_size)
+# def create_generator(img, label, batch_size):
+#     generator = ImageDataGenerator()
+#     return generator.flow(x=img, y=label, batch_size=batch_size)
 
-train_gen = create_generator(x_train, y_train, batch_size)
-test_gen = create_generator(x_test, y_test, batch_size)
+# train_gen = create_generator(x_train, y_train, batch_size)
+# test_gen = create_generator(x_test, y_test, batch_size)
 
 # Model
 model = Sequential()
@@ -67,14 +71,18 @@ model.compile(optimizer=Adam(), loss='mse')
 
 # Callback
 
-tensorboard = TensorBoard(log_dir="logs/{}".format(time.time()),
+tensorboard = TensorBoard(log_dir="logs/real_data_{}".format(time.time()),
                           batch_size=batch_size, write_images=True)
 
-weight_path = "model/first-{epoch:03d}-{val_loss:.5f}.hdf5"
+weight_path = "model/real-{epoch:03d}-{val_loss:.5f}.hdf5"
 
-checkpoint = ModelCheckpoint(weight_path, monitor='val_loss', verbose=0, save_best_only=False,
+checkpoint = ModelCheckpoint(weight_path, monitor='val_loss', verbose=0, save_best_only=True,
                              save_weights_only=False, mode='auto', period=1)
 
 callbacks = [tensorboard, checkpoint]
 
-model.fit_generator(generator=train_gen, steps_per_epoch=batch_size, epochs=epochs, validation_data=test_gen, validation_steps=batch_size, callbacks=callbacks)
+# model.fit_generator(generator=train_gen, steps_per_epoch=x_train.shape[0]//batch_size, epochs=epochs,
+#                     validation_data=test_gen, validation_steps=x_test.shape[0]//batch_size, callbacks=callbacks)
+
+
+model.fit(x=x_train, y=y_train, batch_size=batch_size, epochs=epochs, callbacks=callbacks, validation_data=(x_test, y_test), shuffle=True)

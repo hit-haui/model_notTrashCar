@@ -115,3 +115,6 @@ __pycache__
 /tags
 /logs
 /data
+/data_cu
+/model_cu_rc
+/model
