@@ -13,15 +13,14 @@ import time
 batch_size = 64
 img_shape = (240, 320, 2)
 epochs = 1000
-path = '/home/hai/Downloads/recored_data'
+path = '/home/vicker/Downloads/recored_data'
 
-def create_generator(img, label, batch_size):
-    generator = ImageDataGenerator()
-    return generator.flow(x=img, y=label, batch_size=batch_size)
-
-def load_data():
+def load_data(type_data):
     
-    dataset = json.loads(open(path+'/over_sampled_label.json', 'r').read())
+    if type_data == 'train_generator':
+        dataset = json.loads(open(path+'/over_sampled_label.json', 'r').read())
+    elif type_data == 'val_generator':
+        dataset = json.loads(open(path+'/test.json', 'r').read())
     imgs = []
     angles = []
     for each_sample in tqdm(dataset):
@@ -38,14 +37,50 @@ def load_data():
     imgs = np.array(imgs)
     angles = np.array(angles)
 
-    x_train, x_test, y_train, y_test = train_test_split(imgs, angles, test_size=0.2)
-    print(x_train.shape, y_train.shape)
-    print(x_test.shape, y_train.shape)
     # import pdb; pdb.set_trace()
 
-    train_gen = create_generator(x_train, y_train, batch_size)
-    test_gen = create_generator(x_test, y_test, batch_size)
-    return train_gen,test_gen
+    #train_gen = create_generator(x_train, y_train, batch_size)
+    #test_gen = create_generator(x_test, y_test, batch_size)
+    return imgs,angles
+
+def train_generator():
+    """
+    """
+
+    images_list, labels1_list, = load_data(type_data = 'train_generator')
+    order = np.arange(len(images_list))
+    while True:
+
+        # Shuffle training data
+        np.random.shuffle(order)
+        x = images_list[order]
+        y1 = labels1_list[order]
+
+        for index in range(batch_size):
+            x_train = x[index * batch_size:(index + 1) * batch_size]
+            y1_train = y1[index * batch_size:(index + 1) * batch_size]
+            
+
+            yield (x_train), (y1_train)
+
+def val_generator():
+    """
+    """
+
+    images_list, labels1_list, = load_data(type_data = 'val_generator')
+    order = np.arange(len(images_list))
+    while True:
+
+        # Shuffle training data
+        np.random.shuffle(order)
+        x = images_list[order]
+        y1 = labels1_list[order]
+
+        for index in range(batch_size):
+            x_train = x[index * batch_size:(index + 1) * batch_size]
+            y1_train = y1[index * batch_size:(index + 1) * batch_size]
+        
+            yield (x_train), (y1_train)
 
 def get_callback(weight_path, batch_size):
     # Callbacks

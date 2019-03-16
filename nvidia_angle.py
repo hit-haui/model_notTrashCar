@@ -7,7 +7,8 @@ from config import *
 from common_angle import *
 
 
-train_generator, val_generator = load_data()
+train_generator = train_generator() 
+val_generator = val_generator()
 
 # Init the model
 model = Sequential()
