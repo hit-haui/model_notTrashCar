@@ -10,7 +10,8 @@ from common_angle import *
 
 
 # Data generator
-train_generator, val_generator = load_data()
+train_generator = generator(type_data = 'train_generator') 
+val_generator = generator(type_data = 'val_generator')
 
 # Model
 input_shape = Input(shape=img_shape, name='input_shape')
