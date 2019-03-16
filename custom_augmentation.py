@@ -82,6 +82,7 @@ class RandomSunFlare(iaa.meta.Augmenter):
     def get_parameters(self):
         return [self.abc]
 
+
 class RandomGravel(iaa.meta.Augmenter):
 
     def __init__(self, abc=1, name=None, deterministic=False,
@@ -108,19 +109,21 @@ class RandomGravel(iaa.meta.Augmenter):
         return [self.abc]
 
 
-def motionblur(img): 
-    h,w,_ = img.shape 
-    #left 
-    augment_blur_left = iaa.MotionBlur(k=15, angle =255, direction=-1.0, order=0) 
-    img_drop_left = img[:h,:int(w/2)] 
-    motion_left = augment_blur_left.augment_image(img_drop_left) 
-    #right 
-    augment_blur_right = iaa.MotionBlur(k=15, angle= 105, direction=1.0, order=0) 
-    img_drop_right = img[:h,int(w/2):w] 
-    motion_right = augment_blur_right.augment_image(img_drop_right) 
-    ### 
-    img[:h,:int(w/2)] = motion_left
-    img[:h,int(w/2):w] = motion_right 
+def motionblur(img):
+    h, w, _ = img.shape
+    # left
+    augment_blur_left = iaa.MotionBlur(
+        k=15, angle=255, direction=-1.0, order=0)
+    img_drop_left = img[:h, :int(w/2)]
+    motion_left = augment_blur_left.augment_image(img_drop_left)
+    # right
+    augment_blur_right = iaa.MotionBlur(
+        k=15, angle=105, direction=1.0, order=0)
+    img_drop_right = img[:h, int(w/2):w]
+    motion_right = augment_blur_right.augment_image(img_drop_right)
+    ###
+    img[:h, :int(w/2)] = motion_left
+    img[:h, int(w/2):w] = motion_right
     return img
 
 
