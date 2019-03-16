@@ -6,7 +6,7 @@ import os
 from sklearn.model_selection import train_test_split
 from keras_preprocessing.image import ImageDataGenerator
 from keras.models import Model, Sequential
-from keras.layers import Conv2D, Dense, Flatten, BatchNormalization, Input
+from keras.layers import Conv2D, Dense, Flatten, BatchNormalization, Input, Dropout
 from keras.optimizers import Adam
 from keras.callbacks import TensorBoard, ModelCheckpoint
 import time
@@ -62,7 +62,9 @@ model.add(BatchNormalization())
 model.add(Conv2D(64, (3, 3), strides=(2, 2), activation='relu'))
 model.add(Flatten())
 model.add(Dense(200, activation='relu'))
+model.add(Dropout(rate=0.1))
 model.add(Dense(50, activation='relu'))
+model.add(Dropout(rate=0.05))
 model.add(Dense(1, activation='relu'))
 
 print(model.summary())
@@ -74,7 +76,7 @@ model.compile(optimizer=Adam(), loss='mse')
 tensorboard = TensorBoard(log_dir="logs/real_data_{}".format(time.time()),
                           batch_size=batch_size, write_images=True)
 
-weight_path = "model/real-{epoch:03d}-{val_loss:.5f}.hdf5"
+weight_path = "model/real-dropout-{epoch:03d}-{val_loss:.5f}.hdf5"
 
 checkpoint = ModelCheckpoint(weight_path, monitor='val_loss', verbose=0, save_best_only=True,
                              save_weights_only=False, mode='auto', period=1)
