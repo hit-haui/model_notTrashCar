@@ -6,9 +6,10 @@ import os
 from sklearn.model_selection import train_test_split
 from keras_preprocessing.image import ImageDataGenerator
 from keras.models import Model, Sequential
-from keras.layers import Conv2D, Dense, Flatten, BatchNormalization, Input, Dropout, InputLayer
+from keras.layers import Conv2D, Dense, Flatten, BatchNormalization, Input, Dropout, InputLayer, MaxPooling2D
 from keras.optimizers import Adam
 from keras.callbacks import TensorBoard, ModelCheckpoint
+from keras.losses import categorical_crossentropy
 import time
 from tqdm import tqdm
 
@@ -16,15 +17,20 @@ path = '/home/vicker/Downloads/dataset_1552725149.9200957/'
 dataset = json.loads(open(path+'train_traffic.json','r').read())
 batch_size = 64
 epochs = 100
-img_shape = (240,640)
+img_shape = (240,640,1)
 imgs = []
 lables = []
+traffic = [0,0,0,0]
 for each_sample in tqdm(dataset):
-    img = cv2.imread(each_sample['traffic_img_path'])
+    img = cv2.imread(each_sample['traffic_img_path'],0)
     cv2.destroyAllWindows()
-    lable = each_sample['status_traffic'] 
+    lable = each_sample['status_traffic']
+    img = np.expand_dims(img, axis=-1)
+    traffic[lable] = 1
+    print(img.shape)
     imgs.append(img)
-    lables.append(lable)
+    lables.append(traffic)
+
 
 imgs = np.array(imgs)
 lables = np.array(lables)
@@ -44,7 +50,7 @@ model.add(Dense(4, activation='softmax'))
 
 print(model.summary())
 
-model.compile(optimizer=Adam(), loss='mse')
+model.compile(optimizer=Adam(), loss=categorical_crossentropy, metrics=['accuracy'])
 
 #callback
 
