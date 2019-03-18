@@ -31,7 +31,6 @@ for each_sample in tqdm(dataset):
     imgs.append(img)
     lables.append(traffic)
 
-
 imgs = np.array(imgs)
 lables = np.array(lables)
 
@@ -41,7 +40,7 @@ print(x_test.shape)
 #Model
 model = Sequential()
 model.add(InputLayer(input_shape=img_shape))
-model.add(Conv2D(8, (5,5), strides = (2,2), activation = 'relu'))
+model.add(Conv2D(8, (5,5), strides = (3,3), activation = 'relu'))
 model.add(Conv2D(16, (5,5), strides = (2,2), activation = 'relu'))
 model.add(Conv2D(32, (5,5), strides = (2,2), activation = 'relu'))
 model.add(Flatten())
