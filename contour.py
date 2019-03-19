@@ -1,59 +1,54 @@
 import cv2
-import os 
-import numpy as np 
-
-path = '/home/vicker/Downloads/dataset_1552725149.9200957/'
-for filename in os.listdir(path+'detected/'):
-    print(filename)
-    img = cv2.imread(path+'detected/'+filename)
-    #img = cv2.imread('/home/vicker/Downloads/cC8if.jpg')
-    imgray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
-    img_predict = cv2.imread(path+'rgb/'+filename)
-
-    (ret,thresh) = cv2.threshold(imgray,90,130,0)
-    contours, hierarchy = cv2.findContours(thresh,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
-    # cnt = contours[0]
-    for i in range(len(contours)):
-        cnt = contours[i]
-        ##bb
-        # x,y,w,h = cv2.boundingRect(cnt)
-        # if w>9 and w < 40 and h > 9 and h < 40:
-        #     cv2.rectangle(img_predict,(x,y+80),(x+w,y+80+h),(0,255,0),2)
-
-        ##circle
-        (x,y),radius = cv2.minEnclosingCircle(cnt)
-        center = (int(x),int(y))
-        radius = int(radius)
-        if radius > 11 and radius <30:
-            cv2.circle(img,center,radius,(0,255,0),2)
-            
-        # rect = cv2.minAreaRect(cnt)
-        # box = cv2.boxPoints(rect)
-        # box = np.int0(box)
-        # cv2.drawContours(img,[box],0,(0,0,255),2)
-
-    #cv2.drawContours(img, contours, -1, (0,255,0), 3)
-    cv2.imwrite(path+'contour/'+filename,img)
+import numpy as np
+# import glob
 
 
+data_path = '/Users/lamhoangtung/Downloads/dataset_1552725149.9200957/rgb/'
+# glob.glob(data_path + '*.jpg')
+
+for index in range(1, 292):
+    each_file_path = data_path + '{}_rgb.jpg'.format(index)
+    img = cv2.imread(each_file_path)
+    s = img.shape
+    img = img[:s[0]//2,:]
+    output = img.copy()
+    raw = output.copy()
+
+    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+
+    lower_blue = np.array([100, 70, 70])
+    upper_blue = np.array([140, 255, 255])
+
+    mask = cv2.inRange(hsv, lower_blue, upper_blue)
+    res = cv2.bitwise_and(img, img, mask=mask)
+    color = res.copy()
+    res = cv2.cvtColor(res, cv2.COLOR_RGB2GRAY)
+    res = cv2.adaptiveThreshold(res, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+                               cv2.THRESH_BINARY, 17, 2)
+    # detect circles in the image
+    circles = cv2.HoughCircles(
+        res, cv2.HOUGH_GRADIENT, 1, 20, param1=100, param2=50)
+
+    # ensure at least some circles were found
+    if circles is not None and np.sum(circles) > 0:
+        # convert the (x, y) coordinates and radius of the circles to integers
+        print(circles)
+        circles = np.round(circles[0, :]).astype("int")
+        print('Got', len(circles), 'circles')
+
+        # loop over the (x, y) coordinates and radius of the circles
+        for (x, y, r) in circles:
+            # print(x, y, r)
+            # draw the circle in the output image, then draw a rectangle
+            # corresponding to the center of the circle
+            cv2.circle(output, (x, y), r, (0, 0, 255), 4)
+        # show the output image
+    else:
+        print('No circle')
+    cv2.imshow("color", color)
+    cv2.imshow("output", output)
+    cv2.imshow('lol', res)
+    cv2.waitKey(100)
 
 
-
-# #cimg = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
-# cimg = mask
-# circles = cv2.HoughCircles(cimg,cv2.HOUGH_GRADIENT,1,10,
-#                             param1=50,param2=30,minRadius=0,maxRadius=10)
-
-# circles = np.uint16(np.around(circles))
-# print(img.shape)
-# print(circles)
-# for i in circles[0,:]:
-#     # draw the outer circle
-#     #cv2.imshow('circle',img[])
-#     cv2.circle(cimg,(i[0],i[1]),i[2],(0,255,0),2)
-#     # draw the center of the circle
-#     cv2.circle(cimg,(i[0],i[1]),2,(0,0,255),3)
- 
-# cv2.imshow('anc',cimg)
-# cv2.waitKey(0)
-# cv2.destroyAllWindows()
+cv2.destroyAllWindows()
