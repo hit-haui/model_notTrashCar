@@ -6,46 +6,50 @@ import os
 from sklearn.model_selection import train_test_split
 from keras_preprocessing.image import ImageDataGenerator
 from keras.models import Model, Sequential
-from keras.layers import Conv2D, Dense, Flatten, BatchNormalization, Input, Dropout, InputLayer, MaxPooling2D
+from keras.layers import Conv2D, Dense, BatchNormalization, Input, Dropout, InputLayer, GlobalMaxPooling2D, Flatten
 from keras.optimizers import Adam
-from keras.callbacks import TensorBoard, ModelCheckpoint
+from keras.callbacks import TensorBoard, ModelCheckpoint, EarlyStopping
 from keras.losses import categorical_crossentropy
+from keras.preprocessing.image import ImageDataGenerator
 import time
 from tqdm import tqdm
 
-path = '/home/vicker/Downloads/dataset_1552725149.9200957/'
-dataset = json.loads(open(path+'train_traffic.json','r').read())
+epochs = 200
+img_shape = (80, 80, 1)
 batch_size = 64
-epochs = 100
-img_shape = (240,640,1)
-imgs = []
-lables = []
-traffic = [0,0,0,0]
-for each_sample in tqdm(dataset):
-    img = cv2.imread(each_sample['traffic_img_path'],0)
-    cv2.destroyAllWindows()
-    lable = each_sample['status_traffic']
-    img = np.expand_dims(img, axis=-1)
-    traffic[lable] = 1
-    print(img.shape)
-    imgs.append(img)
-    lables.append(traffic)
 
-imgs = np.array(imgs)
-lables = np.array(lables)
 
-x_train, x_test, y_train, y_test = train_test_split(imgs, lables, test_size=0.2, random_state=2019, shuffle=True)
-print(x_train.shape)
-print(x_test.shape)
+train_datagen = ImageDataGenerator()
+train_generator = train_datagen.flow_from_directory(
+    directory="/home/linus/model_notTrashCar/traffic_sign_data/train",
+    target_size=(80, 80),
+    color_mode="grayscale",
+    batch_size=batch_size,
+    class_mode="categorical",
+    shuffle=True,
+    seed=2019
+)
+
+test_datagen = ImageDataGenerator()
+test_generator = test_datagen.flow_from_directory(
+    directory="/home/linus/model_notTrashCar/traffic_sign_data/test",
+    target_size=(80, 80),
+    color_mode="grayscale",
+    batch_size=batch_size,
+    class_mode="categorical",
+    shuffle=False,
+    seed=2019
+)
+
 #Model
 model = Sequential()
-model.add(InputLayer(input_shape=img_shape))
-model.add(Conv2D(8, (5,5), strides = (3,3), activation = 'relu'))
-model.add(Conv2D(16, (5,5), strides = (2,2), activation = 'relu'))
-model.add(Conv2D(32, (5,5), strides = (2,2), activation = 'relu'))
-model.add(Flatten())
+model.add(Conv2D(16, (5, 5), strides=(1, 1),
+                 activation='relu', input_shape=img_shape))
+model.add(Conv2D(32, (3,3), strides = (1,1), activation = 'relu'))
+model.add(Conv2D(64, (3,3), strides = (1,1), activation = 'relu'))
+model.add(GlobalMaxPooling2D())
 model.add(Dense(16, activation='relu'))
-model.add(Dense(4, activation='softmax'))
+model.add(Dense(3, activation='softmax'))
 
 print(model.summary())
 
@@ -53,18 +57,30 @@ model.compile(optimizer=Adam(), loss=categorical_crossentropy, metrics=['accurac
 
 #callback
 
-tensorboard = TensorBoard(log_dir="logs/detect_traffic_{}".format(time.time()),
+tensorboard = TensorBoard(log_dir="./logs/detect_traffic_{}".format(time.time()),
                           batch_size=batch_size, write_images=True)
 
-weight_path = "model_traffic/detect_traffic-{epoch:03d}-{val_loss:.5f}.hdf5"
+weight_path = "./model_traffic_sign/detect2_traffic-{epoch:03d}-{val_acc:.5f}.hdf5"
 
-checkpoint = ModelCheckpoint(weight_path, monitor='val_loss', verbose=0, save_best_only=True,
+earlystop = EarlyStopping(monitor='val_acc', patience=20, verbose=0, mode='min')
+
+checkpoint = ModelCheckpoint(weight_path, monitor='val_acc', verbose=0, save_best_only=False,
                              save_weights_only=False, mode='auto', period=1)
 
-callbacks = [tensorboard, checkpoint]
+callbacks = [tensorboard, checkpoint, earlystop]
 
-model.fit(x=x_train, y=y_train, batch_size=batch_size, epochs=epochs, callbacks=callbacks, validation_data=(x_test, y_test), shuffle=True)
+STEP_SIZE_TRAIN = train_generator.n//train_generator.batch_size
+STEP_SIZE_VALID = test_generator.n//test_generator.batch_size
 
+# model.fit(x=x_train, y=y_train, batch_size=batch_size, epochs=epochs, callbacks=callbacks, validation_data=(x_test, y_test), shuffle=True)
+model.fit_generator(generator=train_generator,
+                    steps_per_epoch=STEP_SIZE_TRAIN,
+                    validation_data=test_generator,
+                    validation_steps=STEP_SIZE_VALID,
+                    epochs=epochs,
+                    callbacks=callbacks)
+
+model.save('model_traffic_sign_finalll.hdf5')
 
 
 
