@@ -1,13 +1,31 @@
 import cv2
 import numpy as np
 # import glob
+import json
 
-
-data_path = '/Users/lamhoangtung/Downloads/dataset_1552725149.9200957/rgb/'
+data_path = '/home/linus/Desktop/data3/combined.json'
 # glob.glob(data_path + '*.jpg')
+dataset = json.loads(open(data_path, 'r').read())
 
-for index in range(1, 292):
-    each_file_path = data_path + '{}_rgb.jpg'.format(index)
+
+def circle_to_bb(img, x, y, r, index, index_phu):
+    top_y = max(y - r - 10, 0)
+    top_x = max(x - r - 10, 0)
+    y_size = min(top_y+r*2+20, img.shape[0])
+    x_size = min(top_x+r*2+20, img.shape[1])
+    print(top_x, top_y)
+    print(img.shape)
+    img = img[top_y:y_size, top_x:x_size, :]
+    print(img.shape)
+    cv2.imwrite('./traffic_sign/rgb2_{}_{}.jpg'.format(index, index_phu), img)
+    cv2.imshow('bb', img)
+
+
+
+for index, sample in enumerate(dataset):
+    each_file_path = sample['rgb_img_path'].replace(
+        '/Desktop/data/', '/Desktop/data3/')
+    print(each_file_path)
     img = cv2.imread(each_file_path)
     s = img.shape
     img = img[:s[0]//2,:]
@@ -32,23 +50,24 @@ for index in range(1, 292):
     # ensure at least some circles were found
     if circles is not None and np.sum(circles) > 0:
         # convert the (x, y) coordinates and radius of the circles to integers
-        print(circles)
         circles = np.round(circles[0, :]).astype("int")
         print('Got', len(circles), 'circles')
 
         # loop over the (x, y) coordinates and radius of the circles
-        for (x, y, r) in circles:
+        for index_phu, (x, y, r) in enumerate(circles):
+            print(x, y, r)
             # print(x, y, r)
             # draw the circle in the output image, then draw a rectangle
             # corresponding to the center of the circle
             cv2.circle(output, (x, y), r, (0, 0, 255), 4)
+            circle_to_bb(raw, x, y, r, index, index_phu)
         # show the output image
     else:
         print('No circle')
     cv2.imshow("color", color)
     cv2.imshow("output", output)
     cv2.imshow('lol', res)
-    cv2.waitKey(100)
+    cv2.waitKey(1)
 
 
 cv2.destroyAllWindows()

@@ -118,3 +118,4 @@ __pycache__
 /data_cu
 /model_cu_rc
 /model
+*.jpg
