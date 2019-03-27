@@ -127,12 +127,10 @@ def get_predict(img):
                     none +=1
                 elif max(l, max(n, r)) == traffic_list[2]:
                     right +=1
-    if max(left,max(none,right)) == left:
+    if max(left,right) == left:
         return np.array([0,1,0])
-    elif max(left, max(none, right)) == right:
-        return np.array([0, 0, 1])
-    elif max(left, max(none, right)) == none:
-        return np.array([0, 0, 0])
+    elif max(left,right) == right:
+        return np.array([0,0,1])
     elif left and right == none:
         return np.array([0, 0, 0])
 
