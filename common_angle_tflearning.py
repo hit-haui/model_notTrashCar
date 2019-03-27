@@ -1,57 +1,51 @@
-import cv2
-import os
-import numpy as np
-from tqdm import tqdm
 import json
-from sklearn.model_selection import train_test_split
-from keras_preprocessing.image import ImageDataGenerator
-from keras.callbacks import TensorBoard, ModelCheckpoint
+import os
 import time
-from imgaug import augmenters as iaa
-import custom_augmentation as ciaa
-from keras.models import load_model
+
+import cv2
+import numpy as np
 import tensorflow as tf
+from imgaug import augmenters as iaa
+from keras.callbacks import ModelCheckpoint, ReduceLROnPlateau, TensorBoard
+from keras.models import load_model
+from tqdm import tqdm
 
-
-batch_size = 16
-img_shape = (224, 224, 3)
-epochs = 700
-path = '/home/linus/Desktop/final/'
+import custom_augmentation as ciaa
 
 model_traffic = load_model(
     '/home/linus/model_notTrashCar/model_traffic_sign/detect2_traffic-016-0.98212.hdf5')
 graph = tf.get_default_graph()
 
-augment_object = iaa.Sequential([
-    iaa.Add((-20, 20)),
-    iaa.Sometimes(0.5, iaa.AdditiveGaussianNoise(scale=0.03*255)),
-    iaa.Sometimes(0.5, iaa.OneOf([
-        iaa.GaussianBlur(sigma=0.5),
-        iaa.MotionBlur(angle=(0, 360))
-    ])),
-    iaa.GammaContrast(gamma=(0.5, 1.44)),
-    iaa.Sometimes(0.2, iaa.OneOf([
-        iaa.FastSnowyLandscape(lightness_threshold=(0, 150)),
-        #         iaa.Fog()
-    ])),
-    iaa.OneOf([
-        iaa.Sometimes(0.8, ciaa.RandomShadow()),
-        iaa.Sometimes(0.4, ciaa.RandomGravel()),
-        iaa.Sometimes(0.2, ciaa.RandomSunFlare())
-    ])
-])
+# augment_object = iaa.Sequential([
+#     iaa.Add((-20, 20)),
+#     iaa.Sometimes(0.5, iaa.AdditiveGaussianNoise(scale=0.03*255)),
+#     iaa.Sometimes(0.5, iaa.OneOf([
+#         iaa.GaussianBlur(sigma=0.5),
+#         iaa.MotionBlur(angle=(0, 360))
+#     ])),
+#     iaa.GammaContrast(gamma=(0.5, 1.44)),
+#     iaa.Sometimes(0.2, iaa.OneOf([
+#         iaa.FastSnowyLandscape(lightness_threshold=(0, 150)),
+#         #         iaa.Fog()
+#     ])),
+#     iaa.OneOf([
+#         iaa.Sometimes(0.8, ciaa.RandomShadow()),
+#         iaa.Sometimes(0.4, ciaa.RandomGravel()),
+#         iaa.Sometimes(0.2, ciaa.RandomSunFlare())
+#     ])
+# ])
 
-augment_min = iaa.Sequential([
+
+augment_object = augment_min = iaa.Sequential([
     iaa.Sometimes(0.8, iaa.Add((-20, 20)))
 ])
 
 
-def load_data(type_data):
-
+def load_data(type_data, path):
     if type_data == 'train_generator':
-        dataset = json.loads(open(path+'/over_sampled_label.json', 'r').read())
+        dataset = json.loads(open(path + '/over_sampled_label.json', 'r').read())
     elif type_data == 'val_generator':
-        dataset = json.loads(open(path+'/test.json', 'r').read())
+        dataset = json.loads(open(path + '/test.json', 'r').read())
     img_rgb_path = []
     img_depth_path = []
     angles = []
@@ -103,7 +97,7 @@ def get_predict(img):
             # print(x, y, r)
             # draw the circle in the output image, then draw a rectangle
             # corresponding to the center of the circle
-            cv2.circle(output, (x, y), r, (0, 0, 255), 4)
+            # cv2.circle(output, (x, y), r, (0, 0, 255), 4)
             top_y = max(y - r - 10, 0)
             top_x = max(x - r - 10, 0)
             y_size = min(top_y+r*2+20, img.shape[0])
@@ -129,12 +123,10 @@ def get_predict(img):
                     none += 1
                 elif max(l, max(n, r)) == traffic_list[2]:
                     right += 1
-    if max(left, max(none, right)) == left:
+    if max(left, right) == left:
         return np.array([0, 1, 0])
-    elif max(left, max(none, right)) == right:
+    elif max(left, right) == right:
         return np.array([0, 0, 1])
-    elif max(left, max(none, right)) == none:
-        return np.array([0, 0, 0])
     elif left and right == none:
         return np.array([0, 0, 0])
 
@@ -145,11 +137,8 @@ def show(img):
     cv2.destroyAllWindows()
 
 
-def generator(type_data):
-    """
-    """
-
-    img_rgb_path, img_depth_path, angles = load_data(type_data=type_data)
+def generator(type_data, path, batch_size, img_shape):
+    img_rgb_path, img_depth_path, angles = load_data(type_data=type_data, path=path)
     img_rgb_path = np.array(img_rgb_path)
     img_depth_path = np.array(img_depth_path)
     angles = np.array(angles)
@@ -205,17 +194,13 @@ def generator(type_data):
 
 
 def get_callback(weight_path, batch_size):
-    # Callbacks
     # earlystop = EarlyStopping(
     #     monitor='val_loss', patience=5, verbose=0, mode='min')
-
     tensorboard = TensorBoard(log_dir="logs/resnet50_{}".format(time.time()),
                               batch_size=batch_size, write_images=True)
 
     checkpoint = ModelCheckpoint(weight_path, monitor='val_loss', verbose=0, save_best_only=False,
                                  save_weights_only=False, mode='auto', period=1)
-    # reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.2,
-    #                               patience=5, min_lr=1e-5)
-
-    callbacks = [tensorboard, checkpoint]
+    reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.2, patience=5, min_lr=1e-5)
+    callbacks = [tensorboard, checkpoint, reduce_lr]
     return callbacks
