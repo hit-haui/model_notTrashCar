@@ -1,7 +1,7 @@
 import json
 
 from keras.applications import ResNet50
-from keras.layers import (Concatenate, Dense, GlobalMaxPooling2D, Input)
+from keras.layers import Concatenate, Dense, GlobalMaxPooling2D, Input
 from keras.models import Model
 from keras.optimizers import Adam
 

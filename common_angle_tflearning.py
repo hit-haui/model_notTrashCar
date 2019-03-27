@@ -9,6 +9,7 @@ from imgaug import augmenters as iaa
 from keras.callbacks import ModelCheckpoint, ReduceLROnPlateau, TensorBoard
 from keras.models import load_model
 from tqdm import tqdm
+from clr_callback import *
 
 import custom_augmentation as ciaa
 
@@ -201,6 +202,6 @@ def get_callback(weight_path, batch_size):
 
     checkpoint = ModelCheckpoint(weight_path, monitor='val_loss', verbose=0, save_best_only=False,
                                  save_weights_only=False, mode='auto', period=1)
-    reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.2, patience=5, min_lr=1e-5)
-    callbacks = [tensorboard, checkpoint, reduce_lr]
+    clr_triangular = CyclicLR(mode='triangular')
+    callbacks = [tensorboard, checkpoint, clr_triangular]
     return callbacks
