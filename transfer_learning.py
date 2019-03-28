@@ -10,7 +10,7 @@ from common_angle_tflearning import *
 # Param world
 batch_size = 32
 img_shape = (224, 224, 3)
-epochs = 700
+epochs = 300
 data_path = '/home/linus/Desktop/final/'
 total_sample = len(json.loads(
     open(data_path+'/over_sampled_label.json', 'r').read()))
@@ -47,7 +47,7 @@ model.compile(optimizer=Adam(), loss='mse')
 
 
 # Train the model
-weight_path = "model/resnet50_3chanel-{epoch:03d}-{val_loss:.5f}.hdf5"
+weight_path = "model/resnet50_3chanel-{epoch:03d}-{val_loss:.5f}_big_ts_val.hdf5"
 model.fit_generator(generator=train_generator, steps_per_epoch=total_sample//batch_size, epochs=epochs,
                     validation_data=val_generator, validation_steps=batch_size,
                     callbacks=get_callback(weight_path=weight_path, batch_size=batch_size,))

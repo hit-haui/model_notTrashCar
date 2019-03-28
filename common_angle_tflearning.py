@@ -125,9 +125,9 @@ def get_predict(img):
                 elif max(l, max(n, r)) == traffic_list[2]:
                     right += 1
     if max(left, right) == left:
-        return np.array([0, 1, 0])
+        return np.array([0, 9999, 0])
     elif max(left, right) == right:
-        return np.array([0, 0, 1])
+        return np.array([0, 0, 9999])
     elif left and right == none:
         return np.array([0, 0, 0])
 
@@ -197,7 +197,7 @@ def generator(type_data, path, batch_size, img_shape):
 def get_callback(weight_path, batch_size):
     # earlystop = EarlyStopping(
     #     monitor='val_loss', patience=5, verbose=0, mode='min')
-    tensorboard = TensorBoard(log_dir="logs/resnet50_{}".format(time.time()),
+    tensorboard = TensorBoard(log_dir="logs/cyclicLR_resnet50_{}_big_ts_val".format(time.time()),
                               batch_size=batch_size, write_images=True)
 
     checkpoint = ModelCheckpoint(weight_path, monitor='val_loss', verbose=0, save_best_only=False,
