@@ -1,53 +1,106 @@
-import json
+import time
 
-from keras.applications import ResNet50
-from keras.layers import Concatenate, Dense, GlobalMaxPooling2D, Input
-from keras.models import Model
+import numpy as np
+from keras.callbacks import (EarlyStopping, LearningRateScheduler,
+                             ModelCheckpoint, ReduceLROnPlateau, TensorBoard)
+from keras.layers import (BatchNormalization, Concatenate, Conv2D, Dense,
+                          Dropout, Flatten, GlobalMaxPooling2D, Input,
+                          InputLayer)
+from keras.losses import categorical_crossentropy
+from keras.models import Model, Sequential
 from keras.optimizers import Adam
+from keras.preprocessing.image import ImageDataGenerator
+from keras_preprocessing.image import ImageDataGenerator
+from sklearn.model_selection import train_test_split
+from tqdm import tqdm
 
-from common_angle_tflearning import *
+import mobilenets
+from model_utils.lr_schedule import lr_schedule
 
-# Param world
 batch_size = 32
-img_shape = (224, 224, 3)
-epochs = 300
-data_path = '/home/linus/Desktop/final/'
-total_sample = len(json.loads(
-    open(data_path+'/over_sampled_label.json', 'r').read()))
+img_shape = (320, 320, 1)
+epochs = 500
+seed = 2019
+num_classes = 3
 
+# train_datagen = ImageDataGenerator()
+# train_generator = train_datagen.flow_from_directory(
+#     directory="./data_test/train/",
+#     target_size=img_shape[:-1],
+#     color_mode="grayscale",
+#     batch_size=batch_size,
+#     class_mode="categorical",
+#     shuffle=True,
+#     seed=seed
+# )
 
-train_generator = generator(type_data='train_generator',
-                            path=data_path, batch_size=batch_size, img_shape=img_shape)
-val_generator = generator(type_data='val_generator',
-                          path=data_path, batch_size=batch_size, img_shape=img_shape)
+# test_datagen = ImageDataGenerator()
+# test_generator = test_datagen.flow_from_directory(
+#     directory="./data_test/test/",
+#     target_size=img_shape[:-1],
+#     color_mode="grayscale",
+#     batch_size=batch_size,
+#     class_mode="categorical",
+#     shuffle=False,
+#     seed=seed
+# )
 
-# Init the model
-input_img = Input(shape=(img_shape), name='input_shape')
-input_tf_sign = Input(shape=([3, ]), name='input_traffic_sign')
-cnn_model = ResNet50(include_top=False, weights='imagenet',
-                     input_shape=img_shape, input_tensor=input_img)
-X = cnn_model.output
-X = GlobalMaxPooling2D()(X)
-concat = Concatenate(axis=1)([X, input_tf_sign])
-X = Dense(1024, activation='relu')(concat)
-X = Dense(512, activation='relu')(X)
-X = Dense(64, activation='relu')(X)
-X = Dense(1, activation='relu')(X)
+train_data_dir = '/Users/lamhoangtung/cds_data/final/flowable/raw/'
 
-model = Model(input=[input_img, input_tf_sign], output=[X])
+train_datagen = ImageDataGenerator(validation_split=0.2)  # set validation split
 
-for layer in model.layers[:-4]:
-    layer.trainable = False
+train_generator = train_datagen.flow_from_directory(
+    train_data_dir,
+    target_size=img_shape[:-1],
+    batch_size=batch_size,
+    color_mode='grayscale',
+    class_mode='categorical',
+    seed=seed,
+    subset='training')  # set as training data
+
+test_generator = train_datagen.flow_from_directory(
+    train_data_dir,  # same directory as training data
+    target_size=img_shape[:-1],
+    batch_size=batch_size,
+    color_mode='grayscale',
+    class_mode='categorical',
+    seed=seed,
+    subset='validation')  # set as validation data
+
+STEP_SIZE_TRAIN = train_generator.n//train_generator.batch_size
+STEP_SIZE_VALID = test_generator.n//test_generator.batch_size
+
+# Model
+model = mobilenets.MobileNet(
+    input_shape=img_shape, classes=num_classes, attention_module='cbam_block')
+
+model.compile(optimizer=Adam(), loss=categorical_crossentropy,
+              metrics=['accuracy'])
 
 print(model.summary())
 
 
-# Loss and optimizer
-model.compile(optimizer=Adam(), loss='mse')
+tensorboard = TensorBoard(log_dir="logs/{}".format(time.time()),
+                          batch_size=batch_size, write_images=True)
 
+weight_path = "model/classification-{epoch:03d}-{val_acc:.5f}.hdf5"
 
-# Train the model
-weight_path = "model/resnet50_3chanel-{epoch:03d}-{val_loss:.5f}_big_ts_val.hdf5"
-model.fit_generator(generator=train_generator, steps_per_epoch=total_sample//batch_size, epochs=epochs,
-                    validation_data=val_generator, validation_steps=batch_size,
-                    callbacks=get_callback(weight_path=weight_path, batch_size=batch_size,))
+checkpoint = ModelCheckpoint(filepath=weight_path,
+                             monitor='val_acc',
+                             verbose=1,
+                             save_best_only=True)
+
+lr_scheduler = LearningRateScheduler(lr_schedule)
+lr_reducer = ReduceLROnPlateau(factor=np.sqrt(0.1),
+                               cooldown=0,
+                               patience=5,
+                               min_lr=0.5e-6)
+
+callbacks = [tensorboard, checkpoint, lr_reducer, lr_scheduler]
+
+model.fit_generator(generator=train_generator,
+                    steps_per_epoch=STEP_SIZE_TRAIN,
+                    validation_data=test_generator,
+                    validation_steps=STEP_SIZE_VALID,
+                    epochs=epochs,
+                    callbacks=callbacks)
