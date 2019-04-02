@@ -1,5 +1,5 @@
 from imgaug import augmenters as iaa
-import automold as am
+import data_utils.automold as am
 
 
 class RandomShadow(iaa.meta.Augmenter):
@@ -152,3 +152,23 @@ class RandomMotionBlur(iaa.meta.Augmenter):
 
     def get_parameters(self):
         return [self.abc]
+
+
+augment_object = iaa.Sequential([
+    iaa.Add((-20, 20)),
+    iaa.Sometimes(0.5, iaa.AdditiveGaussianNoise(scale=0.03*255)),
+    iaa.Sometimes(0.5, iaa.MotionBlur(angle=(0, 360))),
+    iaa.Sometimes(0.2, iaa.GammaContrast(gamma=(0.5, 1.44))),
+    iaa.Sometimes(0.1, iaa.FastSnowyLandscape(
+        lightness_threshold=(0, 150))),
+    iaa.OneOf([
+        iaa.Sometimes(0.8, RandomShadow()),
+        iaa.Sometimes(0.4, RandomGravel()),
+        iaa.Sometimes(0.2, RandomSunFlare()),
+        iaa.Sometimes(0.3, RandomMotionBlur())
+    ])
+])
+
+
+def augment_image(img):
+    return augment_object.augment_image(img)

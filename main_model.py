@@ -16,6 +16,7 @@ from tqdm import tqdm
 
 import mobilenets
 from model_utils.lr_schedule import lr_schedule
+from data_utils.custom_augmentation import augment_image
 
 batch_size = 32
 img_shape = (320, 320, 1)
@@ -47,7 +48,9 @@ num_classes = 3
 
 train_data_dir = '/Users/lamhoangtung/cds_data/final/flowable/raw/'
 
-train_datagen = ImageDataGenerator(validation_split=0.2)  # set validation split
+train_datagen = ImageDataGenerator(
+    preprocessing_function=augment_image,
+    validation_split=0.2)  # set validation split
 
 train_generator = train_datagen.flow_from_directory(
     train_data_dir,
