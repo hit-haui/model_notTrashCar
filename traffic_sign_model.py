@@ -14,7 +14,7 @@ from keras.preprocessing.image import ImageDataGenerator
 import time
 from tqdm import tqdm
 
-epochs = 200
+epochs = 20
 img_shape = (80, 80, 1)
 batch_size = 64
 
@@ -57,10 +57,10 @@ model.compile(optimizer=Adam(), loss=categorical_crossentropy, metrics=['accurac
 
 #callback
 
-tensorboard = TensorBoard(log_dir="./logs/detect_traffic_{}".format(time.time()),
+tensorboard = TensorBoard(log_dir="./logs/traffic_sign_{}".format(time.time()),
                           batch_size=batch_size, write_images=True)
 
-weight_path = "./model_traffic_sign/detect2_traffic-{epoch:03d}-{val_acc:.5f}.hdf5"
+weight_path = "./model_traffic_sign/traffic_sign_{epoch:03d}_{val_acc:.5f}.hdf5"
 
 earlystop = EarlyStopping(monitor='val_acc', patience=20, verbose=0, mode='min')
 
@@ -80,7 +80,7 @@ model.fit_generator(generator=train_generator,
                     epochs=epochs,
                     callbacks=callbacks)
 
-model.save('model_traffic_sign_finalll.hdf5')
+model.save('./model_traffic_sign/model_traffic_sign_finalll.hdf5')
 
 
 

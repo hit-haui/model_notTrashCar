@@ -17,10 +17,11 @@ from tqdm import tqdm
 import mobilenets
 from model_utils.lr_schedule import lr_schedule
 from data_utils.custom_augmentation import augment_image
+from model_utils.clr import LRFinder
 
-batch_size = 32
+batch_size = 5
 img_shape = (320, 320, 1)
-epochs = 500
+epochs = 2
 seed = 2019
 num_classes = 3
 
@@ -46,10 +47,11 @@ num_classes = 3
 #     seed=seed
 # )
 
-train_data_dir = '/Users/lamhoangtung/cds_data/final/flowable/raw/'
+train_data_dir = '/home/linus/cds_data/train'
 
 train_datagen = ImageDataGenerator(
-    preprocessing_function=augment_image,
+    brightness_range=[0.5, 1.5],
+    # preprocessing_function=augment_image,
     validation_split=0.2)  # set validation split
 
 train_generator = train_datagen.flow_from_directory(
@@ -74,32 +76,34 @@ STEP_SIZE_TRAIN = train_generator.n//train_generator.batch_size
 STEP_SIZE_VALID = test_generator.n//test_generator.batch_size
 
 # Model
-model = mobilenets.MobileNet(
-    input_shape=img_shape, classes=num_classes, attention_module='cbam_block')
+# model = mobilenets.MobileNet(
+#     input_shape=img_shape, classes=num_classes, attention_module='cbam_block')
+model = mobilenets.MiniMobileNetV2(input_shape=img_shape, classes=num_classes)
 
 model.compile(optimizer=Adam(), loss=categorical_crossentropy,
               metrics=['accuracy'])
 
 print(model.summary())
 
-
-tensorboard = TensorBoard(log_dir="logs/{}".format(time.time()),
+tensorboard = TensorBoard(log_dir="./logs/cbam_mobile_net_newdata_{}".format(time.time()),
                           batch_size=batch_size, write_images=True)
 
-weight_path = "model/classification-{epoch:03d}-{val_acc:.5f}.hdf5"
+weight_path = "./model/cbam_mini_mobilenetv2_{epoch:03d}_{val_acc:.5f}.hdf5"
 
 checkpoint = ModelCheckpoint(filepath=weight_path,
                              monitor='val_acc',
                              verbose=1,
-                             save_best_only=True)
+                             save_best_only=False)
 
-lr_scheduler = LearningRateScheduler(lr_schedule)
-lr_reducer = ReduceLROnPlateau(factor=np.sqrt(0.1),
-                               cooldown=0,
-                               patience=5,
-                               min_lr=0.5e-6)
+lr_finder = LRFinder(num_samples=train_generator.n, batch_size=batch_size,
+                       minimum_lr=1e-6, maximum_lr=1,
+                       # validation_data=(X_val, Y_val),
+                       lr_scale='exp', save_dir='./lr_logs/', verbose=True)
 
-callbacks = [tensorboard, checkpoint, lr_reducer, lr_scheduler]
+LRFinder.plot_schedule_from_file('./lr_logs/', clip_beginning=10, clip_endding=5)
+
+
+callbacks = [tensorboard, checkpoint, lr_finder]
 
 model.fit_generator(generator=train_generator,
                     steps_per_epoch=STEP_SIZE_TRAIN,
@@ -107,3 +111,5 @@ model.fit_generator(generator=train_generator,
                     validation_steps=STEP_SIZE_VALID,
                     epochs=epochs,
                     callbacks=callbacks)
+
+lr_finder.plot_schedule(clip_beginning=10, clip_endding=5)

@@ -120,3 +120,6 @@ __pycache__
 /model
 *.jpg
 /data_test
+/old_logs
+/traffic_sign_data
+/model_traffic_sign
